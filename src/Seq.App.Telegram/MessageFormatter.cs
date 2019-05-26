@@ -15,7 +15,7 @@ namespace Seq.App.Telegram
         public MessageFormatter(ILogger log, string baseUrl, string messageTemplate)
         {
             Log = log;
-            MessageTemplate = messageTemplate ?? "[RenderedMessage]";
+            MessageTemplate = messageTemplate ?? "[RenderedMessage] [link]([BaseUrl]/#/events?filter=@Id%3D%3D'[EventId]'&show=expanded)";
             BaseUrl = baseUrl;
         }
 
@@ -25,21 +25,25 @@ namespace Seq.App.Telegram
 
         public string GenerateMessageText(Event<LogEventData> evt)
         {
-            return $"{SubstitutePlaceholders(MessageTemplate, evt)} [link]({BaseUrl}/#/events?filter=@Id%3D%3D'{evt.Id}'&show=expanded)";
+            return $"{SubstitutePlaceholders(MessageTemplate, evt)}";
         }
 
         string SubstitutePlaceholders(string messageTemplateToUse, Event<LogEventData> evt)
         {
             var data = evt.Data;
-            var eventType = evt.EventType;
-            var level = data.Level;
 
             var placeholders = data.Properties?.ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase)
                 ?? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
-            AddValueIfKeyDoesntExist(placeholders, "Level", level);
-            AddValueIfKeyDoesntExist(placeholders, "EventType", eventType);
+            AddValueIfKeyDoesntExist(placeholders, "Level", data.Level);
+            AddValueIfKeyDoesntExist(placeholders, "EventType", evt.EventType);
             AddValueIfKeyDoesntExist(placeholders, "RenderedMessage", data.RenderedMessage);
+            AddValueIfKeyDoesntExist(placeholders, "Exception", data.Exception);
+            AddValueIfKeyDoesntExist(placeholders, "Id", data.Id);
+            AddValueIfKeyDoesntExist(placeholders, "LocalTimestamp", data.LocalTimestamp);
+            AddValueIfKeyDoesntExist(placeholders, "Timestamp", evt.TimestampUtc);
+            AddValueIfKeyDoesntExist(placeholders, "EventId", evt.Id);
+            AddValueIfKeyDoesntExist(placeholders, "BaseUrl", BaseUrl);
 
             return PlaceholdersRegex.Replace(messageTemplateToUse, m =>
             {

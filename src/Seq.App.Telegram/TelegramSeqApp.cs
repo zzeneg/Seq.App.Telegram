@@ -10,7 +10,7 @@ using Telegram.Bot.Types.Enums;
 namespace Seq.App.Telegram
 {
     [SeqApp("Telegram notifier", Description = "Sends messages matching a view to Telegram.")]
-    public class TelegramReactor : Reactor, ISubscribeTo<LogEventData>
+    public class TelegramSeqApp : SeqApp, ISubscribeTo<LogEventData>
     {
         [SeqAppSetting(
             DisplayName = "Bot authentication token",
@@ -29,7 +29,8 @@ namespace Seq.App.Telegram
         public string BaseUrl { get; set; }
 
         [SeqAppSetting(
-            HelpText = "The message template to use when writing the message to Telegram. Refer to https://tlgrm.ru/docs/bots/api#formatting-options for Markdown style formatting options. Event property values can be added in the format [PropertyKey]. The default is \"[RenderedMessage]\"",
+            HelpText = "The message template to use when writing the message to Telegram. Refer to https://core.telegram.org/bots/api#formatting-options for Markdown style formatting options. Event property values can be added in the format [PropertyKey]. The default is \"[RenderedMessage] [link]([BaseUrl]/#/events?filter=@Id%3D%3D'[EventId]'&show=expanded)\"",
+            InputType = SettingInputType.LongText,
             IsOptional = true)]
         public string MessageTemplate { get; set; }
 
@@ -53,6 +54,6 @@ namespace Seq.App.Telegram
             Task.Run(() => telegram.SendTextMessageAsync(ChatId, message, ParseMode.Markdown));
         }
 
-        string GetBaseUri() => BaseUrl ?? Host.ListenUris.FirstOrDefault();
+        string GetBaseUri() => BaseUrl ?? Host.BaseUri;
     }
 }
